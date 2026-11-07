@@ -3,31 +3,43 @@ package vista;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseListener;
 
-public class Vista extends JFrame implements IVista{
+public class Vista extends JFrame implements IVista {
     // --- Elementos de la pantalla de inicio ---
     private JTextField campoAltoTablero;
     private JLabel labelAltoTablero;
-
     private JTextField campoAnchoTablero;
     private JLabel labelAnchoTablero;
-
     private JTextField campoCantMinas;
     private JLabel labelCantMinas;
-
     private JButton botonAceptar;
 
-    public Vista() throws HeadlessException {
-        // --- Inicialización de la ventana ---
-        super("Buscaminas - Inicio");
-        setSize(325,475);
-        setLocationRelativeTo(null);
-        setResizable(false);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    private ActionListener listenerControlador; // Referencia al objeto controlador, cuando el controlador se crea, se pasa como listener de la vista.
 
-        // --- Creación de componentes visuales ---
+    public Vista() throws HeadlessException {
+        super("Buscaminas - Inicio");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
+
+        // Llamamos al método que arma la pantalla para no duplicar código
+        pantallaInicial();
+
+        this.setVisible(true);
+    }
+
+    public void pantallaInicial() {
+        Container lienzo = this.getContentPane();
+        lienzo.removeAll();
+
+        // 1. Restauramos el tamaño original de la pantalla de inicio
+        setSize(325, 475);
+        setLocationRelativeTo(null);
+        setTitle("Buscaminas - Inicio");
+
+        // 2. Creación de componentes visuales
         labelAltoTablero = new JLabel("Alto del tablero");
-        campoAltoTablero = new JTextField(5); // Inicializo 1x1 todos los elementos visuales de la pantalla inicial.
+        campoAltoTablero = new JTextField(5);
 
         labelAnchoTablero = new JLabel("Ancho del tablero");
         campoAnchoTablero = new JTextField(5);
@@ -36,74 +48,96 @@ public class Vista extends JFrame implements IVista{
         campoCantMinas = new JTextField(5);
 
         botonAceptar = new JButton("Aceptar");
-        botonAceptar.setActionCommand("ACEPTAR"); // Nombre del actionCommand para que lo agarre la cadena if-else del controller.
+        botonAceptar.setActionCommand("ACEPTAR");
 
-        // --- Armado del layout ---
-        setLayout(new BorderLayout()); // Tipo de layout de la pantalla de inicio.
-        JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10)); // Crea un panel para el formulario con distribución de 1 fila y 3 columnas
-        panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20)); // Crea márgenes para claridad
+        // RECONEXIÓN CLAVE: Si el controlador ya nos había dado su listener, se lo volvemos a poner al botón nuevo
+        if (this.listenerControlador != null) {
+            botonAceptar.addActionListener(this.listenerControlador);
+        }
 
-        panelFormulario.add(labelAltoTablero); // Agrega los elementos al panel de a uno y en ORDEN.
+        // 3. Armado del layout
+        setLayout(new BorderLayout());
+        JPanel panelFormulario = new JPanel(new GridLayout(6, 2, 10, 10));
+        panelFormulario.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+
+        panelFormulario.add(labelAltoTablero);
         panelFormulario.add(campoAltoTablero);
         panelFormulario.add(labelAnchoTablero);
         panelFormulario.add(campoAnchoTablero);
         panelFormulario.add(labelCantMinas);
         panelFormulario.add(campoCantMinas);
 
-        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Crea un panel para el botón de aceptar
+        JPanel panelBoton = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panelBoton.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         panelBoton.add(botonAceptar);
 
-        add(panelFormulario, BorderLayout.CENTER); // Agrega los dos paneles creados al JFrame principal
+        add(panelFormulario, BorderLayout.CENTER);
         add(panelBoton, BorderLayout.SOUTH);
 
-        this.setVisible(true); // Visibiliza la ventana.
+        // 4. Forzamos el redibujado
+        lienzo.revalidate();
+        lienzo.repaint();
     }
 
-    // --- Métodos de la pantalla de inicio ---
     @Override
-    public int getAltoTablero() {
-        try {
-            return Integer.parseInt(campoAltoTablero.getText()); // Toma el texto que haya escrito en el campo del alto.
-        } catch (NumberFormatException e) {
-            return 0; // Nunca se va a dar esta excepción porque ya checkea el botón de aceptar.
+    public void iniciarTablero(int alto, int ancho, MouseListener mouseListener, ActionListener actionListener) {
+        Container lienzo = this.getContentPane();
+        lienzo.removeAll();
+
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER)); // Creo el panel de los botones
+        JButton botonReiniciar = new JButton("Reiniciar");
+        botonReiniciar.setActionCommand("REINICIAR");
+        botonReiniciar.addActionListener(actionListener); // El controlador ahora es listener del boton de reiniciar.
+        panelBotones.add(botonReiniciar);
+
+        JPanel panelJuego = new JPanel(new GridLayout(alto, ancho));
+        for (int i = 0; i < alto; i++){
+            for (int j = 0; j < ancho; j++){
+                BotonCasilla botonCasilla = new BotonCasilla(i, j);
+                botonCasilla.addMouseListener(mouseListener);
+                panelJuego.add(botonCasilla);
+            }
         }
-    }
 
-    @Override
-    public int getAnchoTablero() {
-        try{
-            return Integer.parseInt(campoAnchoTablero.getText());
-        }
-        catch (NumberFormatException e){
-            return 0;
-        }
-    }
+        lienzo.setLayout(new BorderLayout());
+        lienzo.add(panelBotones, BorderLayout.NORTH);
+        lienzo.add(panelJuego, BorderLayout.CENTER);
 
-    @Override
-    public int getCantMinas(){
-        try {
-            return Integer.parseInt(campoCantMinas.getText());
-        } catch (NumberFormatException e){
-            return 0;
-        }
-    }
+        this.setSize(ancho * 45, (alto * 45) + 50);
+        this.setLocationRelativeTo(null);
+        setTitle("Buscaminas");
 
-
-
-    // --- Métodos de la pantalla del juego ---
-    @Override
-    public void escribeCantMinas() {
-
-    }
-
-    @Override
-    public void poneBandera() {
-
+        lienzo.revalidate();
+        lienzo.repaint();
     }
 
     @Override
     public void setActionListener(ActionListener listener) {
-        this.botonAceptar.addActionListener(listener);
+        this.listenerControlador = listener; // Guardamos el listener en la variable de clase
+        this.botonAceptar.addActionListener(listener); // El listener ahora escucha al boton de aceptar
     }
+
+    @Override
+    public int getAltoTablero() {
+        try { return Integer.parseInt(campoAltoTablero.getText()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    @Override
+    public int getAnchoTablero() {
+        try { return Integer.parseInt(campoAnchoTablero.getText()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    @Override
+    public int getCantMinas() {
+        try { return Integer.parseInt(campoCantMinas.getText()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    @Override
+    public void escribeCantMinas() {}
+
+    @Override
+    public void poneBandera() {}
 }

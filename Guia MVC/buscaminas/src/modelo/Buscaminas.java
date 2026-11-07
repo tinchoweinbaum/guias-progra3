@@ -24,6 +24,12 @@ public class Buscaminas {
         this.cantMinas = cantMinas;
         this.matriz = new int[altoTablero][anchoTablero];
         this.matrizEstado = new int[altoTablero][anchoTablero];
+
+        try{
+            initMatriz(cantMinas);
+        } catch(FueraTableroException e){
+            System.out.println("como hiciste eso");
+        }
     }
 
     public void initMatriz(int cantMinas) throws FueraTableroException {
@@ -60,16 +66,14 @@ public class Buscaminas {
     public void clickCasilla(int i, int j) throws FueraTableroException {
         if (!coordsValidas(i, j)) return;
 
-        if (this.matrizEstado[i][j] == 0) {
+        if (this.matrizEstado[i][j] == 0) { // Ignora el click si la casilla ya estaba clickeada.
             this.matrizEstado[i][j] = CLICKEADO;
 
-            if (isMina(i, j)) {
-                // fin del juego
-            }
+            // Esta funcion no tiene mucho sentido.
         }
     }
 
-    public void flagearCasilla(int i, int j) throws FueraTableroException {
+    public void toggleFlagCasilla(int i, int j) throws FueraTableroException {
         if (!coordsValidas(i, j))
             throw new FueraTableroException("Coordenadas Inválidas: " + i + j);
 
