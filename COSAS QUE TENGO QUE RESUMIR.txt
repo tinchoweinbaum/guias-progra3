@@ -1,0 +1,6 @@
+-> Toda la jerarquía de InputStream/Serialización
+-> MVC (lo entiendo bastante igual)
+-> Colecciones? no sé si hace falta
+-> DAO y DTO
+-> Concurrencia
+-> Observer-observable y State
